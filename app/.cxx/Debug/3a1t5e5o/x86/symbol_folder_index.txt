@@ -1,1 +1,1 @@
-C:\Users\Wilja\OneDrive - KTH\Skrivbordet\HI1033-MobileApp\Laborationer\nback_Lab1.1\app\build\intermediates\cxx\Debug\3a1t5e5o\obj\x86
+C:\Users\Wilja\OneDrive\Skrivbord\React\nback_Lab1.1\app\build\intermediates\cxx\Debug\3a1t5e5o\obj\x86

@@ -13,7 +13,6 @@ package mobappdev.example.nback_cimpl
  */
 
 
-
 class NBackHelper {
 
     // Native function declaration (calls the C function)
