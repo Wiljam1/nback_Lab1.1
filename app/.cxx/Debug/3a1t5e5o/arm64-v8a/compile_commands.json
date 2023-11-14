@@ -1,0 +1,12 @@
+[
+{
+  "directory": "C:/Users/Wilja/OneDrive/Skrivbord/React/nback_Lab1.1/app/.cxx/Debug/3a1t5e5o/arm64-v8a",
+  "command": "C:\\Users\\Wilja\\AppData\\Local\\Android\\Sdk\\ndk\\25.1.8937393\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android26 --sysroot=C:/Users/Wilja/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot -Dnback_cimpl_EXPORTS -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -o CMakeFiles\\nback_cimpl.dir\\nback.c.o -c C:\\Users\\Wilja\\OneDrive\\Skrivbord\\React\\nback_Lab1.1\\app\\src\\main\\cpp\\nback.c",
+  "file": "C:\\Users\\Wilja\\OneDrive\\Skrivbord\\React\\nback_Lab1.1\\app\\src\\main\\cpp\\nback.c"
+},
+{
+  "directory": "C:/Users/Wilja/OneDrive/Skrivbord/React/nback_Lab1.1/app/.cxx/Debug/3a1t5e5o/arm64-v8a",
+  "command": "C:\\Users\\Wilja\\AppData\\Local\\Android\\Sdk\\ndk\\25.1.8937393\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe --target=aarch64-none-linux-android26 --sysroot=C:/Users/Wilja/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DJniBridge_EXPORTS -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -o CMakeFiles\\JniBridge.dir\\JniBridge.c.o -c C:\\Users\\Wilja\\OneDrive\\Skrivbord\\React\\nback_Lab1.1\\app\\src\\main\\cpp\\JniBridge.c",
+  "file": "C:\\Users\\Wilja\\OneDrive\\Skrivbord\\React\\nback_Lab1.1\\app\\src\\main\\cpp\\JniBridge.c"
+}
+]

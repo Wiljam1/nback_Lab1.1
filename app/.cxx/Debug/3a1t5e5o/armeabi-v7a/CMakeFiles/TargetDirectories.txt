@@ -1,0 +1,4 @@
+C:/Users/Wilja/OneDrive/Skrivbord/React/nback_Lab1.1/app/.cxx/Debug/3a1t5e5o/armeabi-v7a/CMakeFiles/nback_cimpl.dir
+C:/Users/Wilja/OneDrive/Skrivbord/React/nback_Lab1.1/app/.cxx/Debug/3a1t5e5o/armeabi-v7a/CMakeFiles/JniBridge.dir
+C:/Users/Wilja/OneDrive/Skrivbord/React/nback_Lab1.1/app/.cxx/Debug/3a1t5e5o/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/Wilja/OneDrive/Skrivbord/React/nback_Lab1.1/app/.cxx/Debug/3a1t5e5o/armeabi-v7a/CMakeFiles/rebuild_cache.dir
