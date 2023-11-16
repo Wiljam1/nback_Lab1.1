@@ -34,9 +34,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import mobappdev.example.nback_cimpl.R
 import mobappdev.example.nback_cimpl.ui.viewmodels.GameType
@@ -80,9 +82,11 @@ fun HomeScreen(
             Text(
                 modifier = Modifier.padding(32.dp),
                 text = "High-Score = $highscore",
-                style = MaterialTheme.typography.headlineLarge
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Bold
+                )
             )
-            // Todo: You'll probably want to change this "BOX" part of the composable
             Box(
                 modifier = Modifier
                     .weight(1f),
@@ -95,16 +99,11 @@ fun HomeScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
+                    // -- Can't remove this if-statement --
                     if (gameState.eventValue != -1) {
-                        Text(
-                            modifier = Modifier.fillMaxWidth(),
-                            text = "Current eventValue is: ${gameState.eventValue}",
-                            textAlign = TextAlign.Center
-                        )
+
                     }
-                    Button(onClick = vm::startGame) {
-                        Text(text = "Generate values")
-                    }
+                    // ----------------------
                     SettingInformationText(
                         mode = vm.getGameType().toString(),
                         n = vm.getNValue(),
@@ -113,48 +112,54 @@ fun HomeScreen(
                     )
                 }
             }
-            // -----------------------
+            GameTypeToggles(vm = vm)
             StartButton(navigate)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceAround,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Button(
-                    onClick = { vm.selectAudio() },
-                    colors = if (vm.getGameType() == GameType.Audio) {
-                        ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                    } else {
-                        ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                    }
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.sound_on),
-                        contentDescription = "Sound",
-                        modifier = Modifier
-                            .height(48.dp)
-                            .aspectRatio(3f / 2f)
-                    )
-                }
-                Button(
-                    onClick = { vm.selectVisual() },
-                    colors = if (vm.getGameType() == GameType.Visual) {
-                        ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                    } else {
-                        ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                    }
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.visual),
-                        contentDescription = "Visual",
-                        modifier = Modifier
-                            .height(48.dp)
-                            .aspectRatio(3f / 2f)
-                    )
-                }
+        }
+    }
+}
+
+@Composable
+fun GameTypeToggles(
+    vm: GameViewModel
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceAround,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Button(
+            onClick = { vm.selectAudio() },
+            colors = if (vm.getGameType() == GameType.Audio) {
+                ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            } else {
+                ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
             }
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.sound_on),
+                contentDescription = "Sound",
+                modifier = Modifier
+                    .height(48.dp)
+                    .aspectRatio(3f / 2f)
+            )
+        }
+        Button(
+            onClick = { vm.selectVisual() },
+            colors = if (vm.getGameType() == GameType.Visual) {
+                ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            } else {
+                ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+            }
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.visual),
+                contentDescription = "Visual",
+                modifier = Modifier
+                    .height(48.dp)
+                    .aspectRatio(3f / 2f)
+            )
         }
     }
 }
@@ -167,7 +172,7 @@ fun StartButton(
         modifier = Modifier
             .padding(16.dp)
             .fillMaxWidth()
-            .height(48.dp)
+            .height(88.dp)
             .background(
                 MaterialTheme.colorScheme.primary,
                 shape = RoundedCornerShape(12.dp)
@@ -194,25 +199,30 @@ fun SettingInformationText(
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = "Mode: $mode",
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.headlineMedium.copy(fontSize = 24.sp, fontWeight = FontWeight.Bold)
         )
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = "Value of N: $n",
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.headlineMedium.copy(fontSize = 24.sp, fontWeight = FontWeight.Bold)
         )
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = "Event delay: $eventDelay ms",
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.headlineMedium.copy(fontSize = 24.sp, fontWeight = FontWeight.Bold)
         )
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = "Number of events: $nrOfEvents",
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.headlineMedium.copy(fontSize = 24.sp, fontWeight = FontWeight.Bold)
         )
     }
 }
+
 
 @Preview
 @Composable
