@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -79,6 +80,22 @@ fun HomeScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Icon(
+                painter = painterResource(id = R.drawable.baseline_lens_blur_24),
+                contentDescription = "grid",
+                modifier = Modifier
+                    .height(88.dp)
+                    .aspectRatio(3f / 2f)
+            )
+            Text(
+                modifier = Modifier.padding(32.dp),
+                text = "N-Back",
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+            Divider(color = Color.Black, thickness = 2.dp)
             Text(
                 modifier = Modifier.padding(32.dp),
                 text = "High-Score = $highscore",
@@ -92,25 +109,18 @@ fun HomeScreen(
                     .weight(1f),
                 contentAlignment = Alignment.Center
             ) {
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    // -- Can't remove this if-statement --
-                    if (gameState.eventValue != -1) {
 
-                    }
-                    // ----------------------
-                    SettingInformationText(
-                        mode = vm.getGameType().toString(),
-                        n = vm.getNValue(),
-                        eventDelay = vm.getEventInterval(),
-                        nrOfEvents = vm.getNrOfEvents()
-                    )
+                // -- Can't remove this if-statement --
+                if (gameState.eventValue != -1) {
+
                 }
+                // ----------------------
+                SettingInformationText(
+                    mode = vm.getGameType().toString(),
+                    n = vm.getNValue(),
+                    eventDelay = vm.getEventInterval(),
+                    nrOfEvents = vm.getNrOfEvents()
+                )
             }
             GameTypeToggles(vm = vm)
             StartButton(navigate)
@@ -200,25 +210,37 @@ fun SettingInformationText(
             modifier = Modifier.fillMaxWidth(),
             text = "Mode: $mode",
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.headlineMedium.copy(fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
         )
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = "Value of N: $n",
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.headlineMedium.copy(fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
         )
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = "Event delay: $eventDelay ms",
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.headlineMedium.copy(fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
         )
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = "Number of events: $nrOfEvents",
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.headlineMedium.copy(fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
         )
     }
 }
