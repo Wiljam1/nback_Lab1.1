@@ -1,5 +1,6 @@
 package mobappdev.example.nback_cimpl.ui.screens
 
+import android.content.res.Configuration
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,13 +28,18 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -63,69 +69,160 @@ fun HomeScreen(
     vm: GameViewModel,
     navigate: () -> Unit
 ) {
-    val highscore by vm.highscore.collectAsState()  // Highscore is its own StateFlow
-    val gameState by vm.gameState.collectAsState()
-    val snackBarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+    var orientation by remember { mutableStateOf(Configuration.ORIENTATION_PORTRAIT) }
+    val configuration = LocalConfiguration.current
 
-    // -----------
+    LaunchedEffect(configuration) {
+        snapshotFlow { configuration.orientation }
+            .collect { orientation = it }
+    }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackBarHostState) }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(it),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.baseline_lens_blur_24),
-                contentDescription = "grid",
-                modifier = Modifier
-                    .height(88.dp)
-                    .aspectRatio(3f / 2f)
-            )
-            Text(
-                modifier = Modifier.padding(32.dp),
-                text = "N-Back",
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    fontSize = 36.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-            Divider(color = Color.Black, thickness = 2.dp)
-            Text(
-                modifier = Modifier.padding(32.dp),
-                text = "High-Score = $highscore",
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    fontSize = 36.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-            Box(
-                modifier = Modifier
-                    .weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
+    when (orientation) {
+        Configuration.ORIENTATION_LANDSCAPE -> {
+            LandscapeContent(vm = vm, navigate = navigate)
+        }
 
-                // -- Can't remove this if-statement --
-                if (gameState.eventValue != -1) {
-
-                }
-                // ----------------------
-                SettingInformationText(
-                    mode = vm.getGameType().toString(),
-                    n = vm.getNValue(),
-                    eventDelay = vm.getEventInterval(),
-                    nrOfEvents = vm.getNrOfEvents()
-                )
-            }
-            GameTypeToggles(vm = vm)
-            StartButton(navigate)
+        else -> {
+            PortraitContent(vm = vm, navigate = navigate)
         }
     }
+
+}
+
+@Composable
+fun PortraitContent(
+    vm: GameViewModel,
+    navigate: () -> Unit,
+) {
+    val highScore by vm.highscore.collectAsState()  // Highscore is its own StateFlow
+    val gameState by vm.gameState.collectAsState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        IconAndTitle(88, 36, 32)
+        Divider(color = Color.Black, thickness = 2.dp)
+        HighScoreText(highScore, 36, 32)
+        Box(
+            modifier = Modifier
+                .weight(1f),
+            contentAlignment = Alignment.Center
+        ) {
+
+            // -- Can't remove this if-statement --
+            if (gameState.eventValue != -1) {
+
+            }
+            // ----------------------
+            SettingInformationText(
+                mode = vm.getGameType().toString(),
+                n = vm.getNValue(),
+                eventDelay = vm.getEventInterval(),
+                nrOfEvents = vm.getNrOfEvents()
+            )
+        }
+        GameTypeToggles(vm = vm)
+        StartButton(navigate, 88, 16, 1.0f)
+    }
+
+}
+
+@Composable
+fun LandscapeContent(
+    vm: GameViewModel,
+    navigate: () -> Unit,
+) {
+    val highScore by vm.highscore.collectAsState()  // Highscore is its own StateFlow
+    val gameState by vm.gameState.collectAsState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        IconAndTitle(44, 16, 8)
+        Divider(color = Color.Black, thickness = 2.dp)
+        HighScoreText(highScore, 24, 8)
+        Row(
+            modifier = Modifier
+                .fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    // -- Can't remove this if-statement --
+                    if (gameState.eventValue != -1) {
+                    }
+                    // ----------------------
+                    SettingInformationText(
+                        mode = vm.getGameType().toString(),
+                        n = vm.getNValue(),
+                        eventDelay = vm.getEventInterval(),
+                        nrOfEvents = vm.getNrOfEvents()
+                    )
+                }
+            }
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+            ) {
+                GameTypeToggles(vm = vm)
+                StartButton(navigate, 88, 16, 1.0f)
+            }
+        }
+    }
+}
+
+@Composable
+fun HighScoreText(
+    highScore: Int,
+    fontSize: Int,
+    padding: Int
+) {
+    Text(
+        modifier = Modifier.padding(padding.dp),
+        text = "High-Score = $highScore",
+        style = MaterialTheme.typography.headlineLarge.copy(
+            fontSize = fontSize.sp,
+            fontWeight = FontWeight.Bold
+        )
+    )
+}
+
+@Composable
+fun IconAndTitle(
+    iconHeight: Int,
+    titleFontSize: Int,
+    padding: Int,
+) {
+    Icon(
+        painter = painterResource(id = R.drawable.baseline_lens_blur_24),
+        contentDescription = "grid",
+        modifier = Modifier
+            .height(iconHeight.dp)
+            .aspectRatio(3f / 2f)
+    )
+    Text(
+        modifier = Modifier.padding(padding.dp),
+        text = "N-Back",
+        style = MaterialTheme.typography.headlineLarge.copy(
+            fontSize = titleFontSize.sp,
+            fontWeight = FontWeight.Bold
+        )
+    )
 }
 
 @Composable
@@ -176,13 +273,16 @@ fun GameTypeToggles(
 
 @Composable
 fun StartButton(
-    navigate: () -> Unit
+    navigate: () -> Unit,
+    height: Int,
+    padding: Int,
+    fillFraction: Float,
 ) {
     Box(
         modifier = Modifier
-            .padding(16.dp)
-            .fillMaxWidth()
-            .height(88.dp)
+            .padding(padding.dp)
+            .fillMaxWidth(fillFraction)
+            .height(height.dp)
             .background(
                 MaterialTheme.colorScheme.primary,
                 shape = RoundedCornerShape(12.dp)
@@ -206,6 +306,15 @@ fun SettingInformationText(
     nrOfEvents: Int
 ) {
     Column {
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = "-- Settings --",
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
+        )
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = "Mode: $mode",
