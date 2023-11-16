@@ -1,6 +1,8 @@
 package mobappdev.example.nback_cimpl
 
 import android.os.Bundle
+import android.speech.tts.TextToSpeech
+import android.speech.tts.TextToSpeech.OnInitListener
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +18,7 @@ import mobappdev.example.nback_cimpl.ui.screens.GameScreen
 import mobappdev.example.nback_cimpl.ui.screens.HomeScreen
 import mobappdev.example.nback_cimpl.ui.theme.NBack_CImplTheme
 import mobappdev.example.nback_cimpl.ui.viewmodels.GameVM
+import java.util.Locale
 
 /**
  * This is the MainActivity of the application
@@ -31,9 +34,13 @@ import mobappdev.example.nback_cimpl.ui.viewmodels.GameVM
  */
 
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), OnInitListener {
+
+    private lateinit var textToSpeech: TextToSpeech
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        textToSpeech = TextToSpeech(this, this)
         setContent {
             NBack_CImplTheme {
                 // A surface container using the 'background' color from the theme
@@ -64,7 +71,8 @@ class MainActivity : ComponentActivity() {
                                 vm = gameViewModel,
                                 navigate = {
                                     navController.navigate("home")
-                                }
+                                },
+                                textToSpeech = textToSpeech
                             )
                         }
                     }
@@ -74,5 +82,29 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            val result = textToSpeech.setLanguage(Locale.ENGLISH)
+
+            if (result == TextToSpeech.LANG_MISSING_DATA ||
+                result == TextToSpeech.LANG_NOT_SUPPORTED
+            ) {
+                // Handle language not supported or missing data
+            } else {
+                // Text-to-Speech is ready
+            }
+        } else {
+            // Initialization failed
+        }
+    }
+
+    override fun onDestroy() {
+        if (::textToSpeech.isInitialized) {
+            textToSpeech.stop()
+            textToSpeech.shutdown()
+        }
+        super.onDestroy()
     }
 }

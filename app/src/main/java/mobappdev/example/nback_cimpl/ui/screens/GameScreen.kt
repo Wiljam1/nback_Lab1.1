@@ -1,5 +1,6 @@
 package mobappdev.example.nback_cimpl.ui.screens
 
+import android.speech.tts.TextToSpeech
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,6 +25,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -43,7 +45,8 @@ import mobappdev.example.nback_cimpl.ui.viewmodels.GuessType
 @Composable
 fun GameScreen(
     vm: GameViewModel,
-    navigate: () -> Unit
+    navigate: () -> Unit,
+    textToSpeech: TextToSpeech
 ) {
     val gameState by vm.gameState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
@@ -52,6 +55,16 @@ fun GameScreen(
     // -----------
     val TAG = "GameScreen"
     val isRoundInProgress: Boolean = gameState.eventValue != -1
+    val shouldSpeak: Boolean = gameState.shouldSpeak
+
+    // textToSpeech when updated in view-model
+    if(shouldSpeak) {
+        val text = gameState.textToSpeak
+        if (text != null) {
+            textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+        }
+        vm.setShouldSpeak(false)
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackBarHostState) }
@@ -80,7 +93,16 @@ fun GameScreen(
                     .weight(1f),
                 contentAlignment = Alignment.Center
             ) {
-                Grid(vm)
+                if(gameState.gameType == GameType.Visual) {
+                    Grid(vm)
+                }
+                else {
+                    Text(
+                        modifier = Modifier.padding(16.dp),
+                        text = "Listen closely",
+                        style = MaterialTheme.typography.displaySmall.copy(fontSize = 24.sp)
+                    )
+                }
                 Column(
                     Modifier
                         .fillMaxWidth()
@@ -157,12 +179,12 @@ fun StateInformationText(
     )
     Text(
         modifier = Modifier.fillMaxWidth(),
-        text = "Current event number: ${vm.getEventIndex()}",
+        text = "Current event number: ${ gameState.previousValues.size }",
         textAlign = TextAlign.Center
     )
     Text(
         modifier = Modifier.fillMaxWidth(),
-        text = "Correct responses: ${gameState.nrOfCorrect}",
+        text = "Correct responses: ${ gameState.nrOfCorrect }",
         textAlign = TextAlign.Center
     )
 

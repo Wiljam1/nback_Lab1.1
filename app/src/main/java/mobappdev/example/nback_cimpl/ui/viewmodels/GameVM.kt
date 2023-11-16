@@ -1,7 +1,6 @@
 package mobappdev.example.nback_cimpl.ui.viewmodels
 
 import android.util.Log
-import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -40,12 +39,12 @@ interface GameViewModel {
     val score: StateFlow<Int>
     val highscore: StateFlow<Int>
 
+    fun setShouldSpeak(bool: Boolean)
     fun setGameType(gameType: GameType)
     fun getGameType(): GameType
     fun getNValue(): Int
     fun getEventInterval(): Long
     fun getNrOfEvents(): Int
-    fun getEventIndex(): Int
     fun startGame()
     fun resetGame()
     fun checkMatch(): Boolean
@@ -68,6 +67,12 @@ class GameVM(
     private val _highscore = MutableStateFlow(0)
     override val highscore: StateFlow<Int>
         get() = _highscore
+
+    override fun setShouldSpeak(shouldSpeak: Boolean) {
+        _gameState.value = _gameState.value.copy(
+            shouldSpeak = shouldSpeak
+        )
+    }
 
     private var job: Job? = null  // coroutine job for the game event
 
@@ -99,10 +104,6 @@ class GameVM(
         return _gameState.value.nrOfEvents
     }
 
-    override fun getEventIndex(): Int {
-        return _gameState.value.previousValues.size
-    }
-
     override fun selectAudio() {
         setGameType(GameType.Audio)
     }
@@ -124,7 +125,7 @@ class GameVM(
 
         job = viewModelScope.launch {
             when (gameState.value.gameType) {
-                GameType.Audio -> runAudioGame()
+                GameType.Audio -> runAudioGame(events)
                 GameType.AudioVisual -> runAudioVisualGame()
                 GameType.Visual -> runVisualGame(events)
             }
@@ -166,8 +167,38 @@ class GameVM(
     }
 
 
-    private fun runAudioGame() {
-        // TODO: Make work for Basic grade
+    private suspend fun runAudioGame(events: Array<Int>) {
+        resetGame()
+
+        for (value in events) {
+            _gameState.value = _gameState.value.copy(
+                eventValue = value,
+                eventScored = false,
+                guessType = GuessType.NONE,
+                textToSpeak = numberToAlphabet(value),
+                shouldSpeak = true,
+                previousValues = _gameState.value.previousValues.toMutableList().apply { add(value) }
+            )
+            delay(_gameState.value.eventDelay)
+        }
+
+        delay(_gameState.value.eventDelay)
+        endGame()
+    }
+
+    private fun numberToAlphabet(number: Int): String {
+        return when (number) {
+            1 -> "A"
+            2 -> "B"
+            3 -> "C"
+            4 -> "D"
+            5 -> "E"
+            6 -> "F"
+            7 -> "G"
+            8 -> "H"
+            9 -> "I"
+            else -> ""
+        }
     }
 
     private suspend fun runVisualGame(events: Array<Int>) {
@@ -176,10 +207,10 @@ class GameVM(
         for (value in events) {
             _gameState.value = _gameState.value.copy(
                 eventValue = value,
-                eventScored = false
+                eventScored = false,
+                previousValues = _gameState.value.previousValues.toMutableList().apply { add(value) },
+                guessType = GuessType.NONE
             )
-            _gameState.value.previousValues.add(value)
-            _gameState.value = _gameState.value.copy(guessType = GuessType.NONE)
             delay(_gameState.value.eventDelay)
         }
 
@@ -209,6 +240,7 @@ class GameVM(
             eventValue = -1,
             previousValues = mutableListOf(),
             nrOfCorrect = 0,
+            textToSpeak = null,
         )
 
         _score.value = 0
@@ -259,6 +291,8 @@ data class GameState(
     val eventScored: Boolean = false,
     val guessType: GuessType = GuessType.NONE,
     val nrOfCorrect: Int = 0,
+    val textToSpeak: String? = null,
+    val shouldSpeak: Boolean = true,
 )
 
 //class FakeVM : GameViewModel {
