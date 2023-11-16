@@ -1,6 +1,7 @@
 package mobappdev.example.nback_cimpl.ui.viewmodels
 
 import android.util.Log
+import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -38,17 +39,24 @@ interface GameViewModel {
     val gameState: StateFlow<GameState>
     val score: StateFlow<Int>
     val highscore: StateFlow<Int>
-    val nBack: Int
 
     fun setGameType(gameType: GameType)
+    fun getGameType(): GameType
+    fun getNValue(): Int
+    fun getEventInterval(): Long
+    fun getNrOfEvents(): Int
+    fun getEventIndex(): Int
     fun startGame()
+    fun resetGame()
+    fun checkMatch(): Boolean
+    fun selectAudio()
+    fun selectVisual()
 
-    fun checkMatch()
 }
 
 class GameVM(
     private val userPreferencesRepository: UserPreferencesRepository
-): GameViewModel, ViewModel() {
+) : GameViewModel, ViewModel() {
     private val _gameState = MutableStateFlow(GameState())
     override val gameState: StateFlow<GameState>
         get() = _gameState.asStateFlow()
@@ -61,25 +69,57 @@ class GameVM(
     override val highscore: StateFlow<Int>
         get() = _highscore
 
-    // nBack is currently hardcoded
-    override val nBack: Int = 2
-
     private var job: Job? = null  // coroutine job for the game event
-    private val eventInterval: Long = 2000L  // 2000 ms (2s)
 
     private val nBackHelper = NBackHelper()  // Helper that generate the event array
     private var events = emptyArray<Int>()  // Array with all events
 
+    //-----------------------------------
+    private val TAG = "ViewModel"
+
     override fun setGameType(gameType: GameType) {
         // update the gametype in the gamestate
         _gameState.value = _gameState.value.copy(gameType = gameType)
+        Log.d(TAG, "Gamestate set: " + _gameState.value)
+    }
+
+    override fun getGameType(): GameType {
+        return _gameState.value.gameType
+    }
+
+    override fun getNValue(): Int {
+        return _gameState.value.nBack
+    }
+
+    override fun getEventInterval(): Long {
+        return _gameState.value.eventDelay
+    }
+
+    override fun getNrOfEvents(): Int {
+        return _gameState.value.nrOfEvents
+    }
+
+    override fun getEventIndex(): Int {
+        return _gameState.value.previousValues.size
+    }
+
+    override fun selectAudio() {
+        setGameType(GameType.Audio)
+    }
+
+    override fun selectVisual() {
+        setGameType(GameType.Visual)
     }
 
     override fun startGame() {
         job?.cancel()  // Cancel any existing game loop
 
+        val nrOfEvents = _gameState.value.nrOfEvents
+        val n = _gameState.value.nBack
+
         // Get the events from our C-model (returns IntArray, so we need to convert to Array<Int>)
-        events = nBackHelper.generateNBackString(10, 9, 30, nBack).toList().toTypedArray()  // Todo Higher Grade: currently the size etc. are hardcoded, make these based on user input
+        events = nBackHelper.generateNBackString(nrOfEvents, nrOfEvents - 1, 30, n).toList()
+            .toTypedArray()  // TODO Higher Grade: currently the size etc. are hardcoded, make these based on user input
         Log.d("GameVM", "The following sequence was generated: ${events.contentToString()}")
 
         job = viewModelScope.launch {
@@ -88,30 +128,93 @@ class GameVM(
                 GameType.AudioVisual -> runAudioVisualGame()
                 GameType.Visual -> runVisualGame(events)
             }
-            // Todo: update the highscore
+            // TODO: Make high score persistent
         }
     }
 
-    override fun checkMatch() {
-        /**
-         * Todo: This function should check if there is a match when the user presses a match button
-         * Make sure the user can only register a match once for each event.
-         */
+    override fun checkMatch(): Boolean {
+        val n = _gameState.value.nBack
+        val currentValue = gameState.value.eventValue
+        val previousValues = gameState.value.previousValues
+
+        if (previousValues.size < n || gameState.value.eventScored) {
+            // Not allowed to check
+            _gameState.value = _gameState.value.copy(guessType = GuessType.NONE)
+            return false
+        }
+
+        val correctValue = previousValues[previousValues.size - n - 1]
+        val isMatch = currentValue == correctValue
+
+        handleResult(isMatch)
+        return isMatch
     }
+
+    private fun handleResult(isMatch: Boolean) {
+        if (isMatch) {
+            _score.value += 10
+            _gameState.value = _gameState.value.copy(
+                guessType = GuessType.CORRECT,
+                nrOfCorrect = gameState.value.nrOfCorrect + 1
+            )
+        } else {
+            _score.value -= 5
+            _gameState.value = _gameState.value.copy(guessType = GuessType.WRONG)
+        }
+
+        _gameState.value = _gameState.value.copy(eventScored = true)
+    }
+
+
     private fun runAudioGame() {
-        // Todo: Make work for Basic grade
+        // TODO: Make work for Basic grade
     }
 
-    private suspend fun runVisualGame(events: Array<Int>){
-        // Todo: Replace this code for actual game code
+    private suspend fun runVisualGame(events: Array<Int>) {
+        resetGame()
+
         for (value in events) {
-            _gameState.value = _gameState.value.copy(eventValue = value)
-            delay(eventInterval)
+            _gameState.value = _gameState.value.copy(
+                eventValue = value,
+                eventScored = false
+            )
+            _gameState.value.previousValues.add(value)
+            _gameState.value = _gameState.value.copy(guessType = GuessType.NONE)
+            delay(_gameState.value.eventDelay)
         }
 
+        delay(_gameState.value.eventDelay)
+        endGame()
     }
 
-    private fun runAudioVisualGame(){
+    private fun endGame() {
+        _gameState.value = _gameState.value.copy(
+            eventValue = -1,
+            eventScored = false,
+            previousValues = mutableListOf(),
+        )
+        updateHighScore()
+    }
+
+    private fun updateHighScore() {
+        if (_score.value > _highscore.value) {
+            _highscore.value = _score.value
+        }
+    }
+
+    override fun resetGame() {
+        job?.cancel()
+
+        _gameState.value = _gameState.value.copy(
+            eventValue = -1,
+            previousValues = mutableListOf(),
+            nrOfCorrect = 0,
+        )
+
+        _score.value = 0
+    }
+
+    private fun runAudioVisualGame() {
         // Todo: Make work for Higher grade
     }
 
@@ -135,34 +238,51 @@ class GameVM(
 }
 
 // Class with the different game types
-enum class GameType{
+enum class GameType {
     Audio,
     Visual,
     AudioVisual
 }
 
+enum class GuessType {
+    NONE, CORRECT, WRONG
+}
+
 data class GameState(
     // You can use this state to push values from the VM to your UI.
     val gameType: GameType = GameType.Visual,  // Type of the game
-    val eventValue: Int = -1  // The value of the array string
+    val nBack: Int = 2,
+    val eventDelay: Long = 2000L,
+    val nrOfEvents: Int = 10,
+    val eventValue: Int = -1,  // The value of the array string
+    val previousValues: MutableList<Int> = mutableListOf(),
+    val eventScored: Boolean = false,
+    val guessType: GuessType = GuessType.NONE,
+    val nrOfCorrect: Int = 0,
 )
 
-class FakeVM: GameViewModel{
-    override val gameState: StateFlow<GameState>
-        get() = MutableStateFlow(GameState()).asStateFlow()
-    override val score: StateFlow<Int>
-        get() = MutableStateFlow(2).asStateFlow()
-    override val highscore: StateFlow<Int>
-        get() = MutableStateFlow(42).asStateFlow()
-    override val nBack: Int
-        get() = 2
-
-    override fun setGameType(gameType: GameType) {
-    }
-
-    override fun startGame() {
-    }
-
-    override fun checkMatch() {
-    }
-}
+//class FakeVM : GameViewModel {
+//    override val gameState: StateFlow<GameState>
+//        get() = MutableStateFlow(GameState()).asStateFlow()
+//    override val score: StateFlow<Int>
+//        get() = MutableStateFlow(2).asStateFlow()
+//    override val highscore: StateFlow<Int>
+//        get() = MutableStateFlow(42).asStateFlow()
+//    override val nBack: Int
+//        get() = 2
+//
+//    override fun setGameType(gameType: GameType) {
+//    }
+//
+//    override fun startGame() {
+//    }
+//
+//    override fun checkMatch() {
+//    }
+//
+//    override fun selectAudio() {
+//    }
+//
+//    override fun selectVisual() {
+//    }
+//}

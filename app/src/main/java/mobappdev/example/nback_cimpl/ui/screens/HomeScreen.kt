@@ -1,15 +1,22 @@
 package mobappdev.example.nback_cimpl.ui.screens
 
+import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -25,13 +32,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import mobappdev.example.nback_cimpl.R
-import mobappdev.example.nback_cimpl.ui.viewmodels.FakeVM
+import mobappdev.example.nback_cimpl.ui.viewmodels.GameType
 import mobappdev.example.nback_cimpl.ui.viewmodels.GameViewModel
 
 /**
@@ -49,12 +57,15 @@ import mobappdev.example.nback_cimpl.ui.viewmodels.GameViewModel
 
 @Composable
 fun HomeScreen(
-    vm: GameViewModel
+    vm: GameViewModel,
+    navigate: () -> Unit
 ) {
     val highscore by vm.highscore.collectAsState()  // Highscore is its own StateFlow
     val gameState by vm.gameState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    // -----------
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackBarHostState) }
@@ -73,12 +84,16 @@ fun HomeScreen(
             )
             // Todo: You'll probably want to change this "BOX" part of the composable
             Box(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
-                    Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
                     if (gameState.eventValue != -1) {
                         Text(
@@ -88,15 +103,18 @@ fun HomeScreen(
                         )
                     }
                     Button(onClick = vm::startGame) {
-                        Text(text = "Generate eventValues")
+                        Text(text = "Generate values")
                     }
+                    SettingInformationText(
+                        mode = vm.getGameType().toString(),
+                        n = vm.getNValue(),
+                        eventDelay = vm.getEventInterval(),
+                        nrOfEvents = vm.getNrOfEvents()
+                    )
                 }
             }
-            Text(
-                modifier = Modifier.padding(16.dp),
-                text = "Start Game".uppercase(),
-                style = MaterialTheme.typography.displaySmall
-            )
+            // -----------------------
+            StartButton(navigate)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -104,14 +122,14 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Button(onClick = {
-                    // Todo: change this button behaviour
-                    scope.launch {
-                        snackBarHostState.showSnackbar(
-                            message = "Hey! you clicked the audio button"
-                        )
+                Button(
+                    onClick = { vm.selectAudio() },
+                    colors = if (vm.getGameType() == GameType.Audio) {
+                        ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    } else {
+                        ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
                     }
-                }) {
+                ) {
                     Icon(
                         painter = painterResource(id = R.drawable.sound_on),
                         contentDescription = "Sound",
@@ -121,15 +139,13 @@ fun HomeScreen(
                     )
                 }
                 Button(
-                    onClick = {
-                        // Todo: change this button behaviour
-                        scope.launch {
-                            snackBarHostState.showSnackbar(
-                                message = "Hey! you clicked the visual button",
-                                duration = SnackbarDuration.Short
-                            )
-                        }
-                    }) {
+                    onClick = { vm.selectVisual() },
+                    colors = if (vm.getGameType() == GameType.Visual) {
+                        ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    } else {
+                        ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                    }
+                ) {
                     Icon(
                         painter = painterResource(id = R.drawable.visual),
                         contentDescription = "Visual",
@@ -143,11 +159,66 @@ fun HomeScreen(
     }
 }
 
+@Composable
+fun StartButton(
+    navigate: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxWidth()
+            .height(48.dp)
+            .background(
+                MaterialTheme.colorScheme.primary,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clickable { navigate.invoke() },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "Start Game".uppercase(),
+            style = MaterialTheme.typography.displaySmall,
+            color = MaterialTheme.colorScheme.onPrimary
+        )
+    }
+}
+
+@Composable
+fun SettingInformationText(
+    mode: String,
+    n: Int,
+    eventDelay: Long,
+    nrOfEvents: Int
+) {
+    Column {
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = "Mode: $mode",
+            textAlign = TextAlign.Center
+        )
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = "Value of N: $n",
+            textAlign = TextAlign.Center
+        )
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = "Event delay: $eventDelay ms",
+            textAlign = TextAlign.Center
+        )
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = "Number of events: $nrOfEvents",
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
 @Preview
 @Composable
 fun HomeScreenPreview() {
     // Since I am injecting a VM into my homescreen that depends on Application context, the preview doesn't work.
-    Surface(){
-        HomeScreen(FakeVM())
+    Surface() {
+        //HomeScreen(FakeVM())
     }
 }
