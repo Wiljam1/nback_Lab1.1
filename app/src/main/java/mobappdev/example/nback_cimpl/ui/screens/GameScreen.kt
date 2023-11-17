@@ -33,6 +33,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -50,7 +51,6 @@ fun GameScreen(
 ) {
     val gameState by vm.gameState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
 
     // -----------
     val TAG = "GameScreen"
@@ -58,7 +58,7 @@ fun GameScreen(
     val shouldSpeak: Boolean = gameState.shouldSpeak
 
     // textToSpeech when updated in view-model
-    if(shouldSpeak) {
+    if (shouldSpeak) {
         val text = gameState.textToSpeak
         if (text != null) {
             textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
@@ -82,23 +82,34 @@ fun GameScreen(
                     navigate.invoke()
                     vm.resetGame()
                 },
-                modifier = Modifier.align(Alignment.Start)
+                modifier = Modifier
+                    .align(Alignment.Start)
+                    .padding(4.dp)
             ) {
-                Text(text = "Back to home")
+                Text(
+                    text = "Back to home",
+                    style = MaterialTheme.typography.displaySmall.copy(
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
             }
-            StateInformationText(vm = vm)
+            StateInformationText(
+                vm = vm,
+
+                )
             // Todo: You'll probably want to change this "BOX" part of the composable
             Box(
                 modifier = Modifier
                     .weight(1f),
                 contentAlignment = Alignment.Center
             ) {
-                if(gameState.gameType == GameType.Visual) {
+                if (gameState.gameType == GameType.Visual) {
                     Grid(vm)
-                }
-                else {
+
+                } else {
                     Text(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(bottom = 100.dp),
                         text = "Listen closely",
                         style = MaterialTheme.typography.displaySmall.copy(fontSize = 24.sp)
                     )
@@ -106,58 +117,12 @@ fun GameScreen(
                 Column(
                     Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(),
+                        .fillMaxHeight()
+                        .padding(bottom = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Bottom
                 ) {
-                    Button(
-                        onClick = vm::startGame,
-                        enabled = !isRoundInProgress
-                    ) {
-                        Text(text = "Start a round")
-                    }
-                }
-            }
-            // -----------------------
-            Text(
-                modifier = Modifier.padding(16.dp),
-                text = "Tap below when match".uppercase(),
-                style = MaterialTheme.typography.displaySmall.copy(fontSize = 16.sp)
-            )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceAround,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Button(
-                    onClick = {
-                        //Log.d(TAG, "Checking match...")
-                        vm.checkMatch()
-                    },
-                    colors = when (gameState.guessType) {
-                        GuessType.NONE -> ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                        GuessType.WRONG -> ButtonDefaults.buttonColors(containerColor = androidx.compose.ui.graphics.Color.Red)
-                        GuessType.CORRECT -> ButtonDefaults.buttonColors(containerColor = androidx.compose.ui.graphics.Color.Green)
-                    },
-                    enabled = isRoundInProgress
-                ) {
-                    Icon(
-                        painter = painterResource(
-                            id = when (gameState.gameType) {
-                                GameType.Audio -> R.drawable.sound_on
-                                GameType.Visual -> R.drawable.visual
-                                else -> {
-                                    R.drawable.visual
-                                }
-                            }
-                        ),
-                        contentDescription = "Button with icon",
-                        modifier = Modifier
-                            .height(48.dp)
-                            .aspectRatio(3f / 2f)
-                    )
+                    MatchButton(vm)
                 }
             }
         }
@@ -165,9 +130,102 @@ fun GameScreen(
 }
 
 @Composable
+fun MatchButton(
+    vm: GameViewModel
+) {
+    val gameState by vm.gameState.collectAsState()
+    val isRoundInProgress: Boolean = gameState.eventValue != -1
+    val paddingValue = if (!isRoundInProgress) 20.dp else 0.dp
+    Button(
+        onClick = {
+            when {
+                isRoundInProgress -> vm.checkMatch()
+                else -> vm.startGame()
+            }
+        },
+        colors = if (isRoundInProgress) {
+            when (gameState.guessType) {
+                GuessType.NONE -> ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                GuessType.WRONG -> ButtonDefaults.buttonColors(containerColor = androidx.compose.ui.graphics.Color.Red)
+                GuessType.CORRECT -> ButtonDefaults.buttonColors(containerColor = androidx.compose.ui.graphics.Color.Green)
+            }
+        } else {
+            ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+        },
+        modifier = Modifier
+            .padding(bottom = paddingValue)
+    ) {
+        if (!isRoundInProgress) {
+            Text(
+                text = "Start round".uppercase(),
+                style = MaterialTheme.typography.displaySmall.copy(
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+        } else {
+            Icon(
+                painter = painterResource(
+                    id = when (gameState.gameType) {
+                        GameType.Audio -> R.drawable.sound_on
+                        GameType.Visual -> R.drawable.visual
+                        else -> {
+                            R.drawable.visual
+                        }
+                    }
+                ),
+                contentDescription = "Button with icon",
+                modifier = Modifier
+                    .height(88.dp)
+                    .aspectRatio(3f / 2f)
+            )
+        }
+    }
+}
+
+@Composable
+fun PlayArea(
+    vm: GameViewModel
+) {
+    Text(
+        modifier = Modifier.padding(8.dp),
+        text = "Tap below when match".uppercase(),
+        style = MaterialTheme.typography.displaySmall.copy(fontSize = 24.sp)
+    )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        horizontalArrangement = Arrangement.SpaceAround,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        MatchButton(vm)
+    }
+}
+
+@Composable
+fun StartButton(
+    vm: GameViewModel
+) {
+    val gameState by vm.gameState.collectAsState()
+    val isRoundInProgress: Boolean = gameState.eventValue != -1
+    Button(
+        onClick = vm::startGame,
+        enabled = !isRoundInProgress
+    ) {
+        Text(
+            text = "Start round".uppercase(),
+            style = MaterialTheme.typography.displaySmall.copy(
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
+        )
+    }
+}
+
+@Composable
 fun StateInformationText(
     vm: GameViewModel,
-
     ) {
     val gameState by vm.gameState.collectAsState()
     val score by vm.score.collectAsState()
@@ -175,17 +233,28 @@ fun StateInformationText(
     Text(
         modifier = Modifier.padding(16.dp),
         text = "Score: $score".uppercase(),
-        style = MaterialTheme.typography.displaySmall.copy(fontSize = 24.sp)
+        style = MaterialTheme.typography.headlineMedium.copy(
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold
+        )
     )
     Text(
         modifier = Modifier.fillMaxWidth(),
-        text = "Current event number: ${ gameState.previousValues.size }",
-        textAlign = TextAlign.Center
+        text = "Current event number: ${gameState.previousValues.size}",
+        textAlign = TextAlign.Center,
+        style = MaterialTheme.typography.headlineMedium.copy(
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold
+        )
     )
     Text(
         modifier = Modifier.fillMaxWidth(),
-        text = "Correct responses: ${ gameState.nrOfCorrect }",
-        textAlign = TextAlign.Center
+        text = "Correct responses: ${gameState.nrOfCorrect}",
+        textAlign = TextAlign.Center,
+        style = MaterialTheme.typography.headlineMedium.copy(
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold
+        )
     )
 
 }
@@ -197,9 +266,12 @@ fun Grid(
     val gameState by vm.gameState.collectAsState()
     val TAG = "Grid"
     val gridSize = 3
-    val squareSize = 100.dp
+    val squareSize = 115.dp
 
-    Column {
+    Column(
+        modifier = Modifier
+            .padding(bottom = 100.dp)
+    ) {
         repeat(gridSize) { rowIndex ->
             Row {
                 repeat(gridSize) { columnIndex ->

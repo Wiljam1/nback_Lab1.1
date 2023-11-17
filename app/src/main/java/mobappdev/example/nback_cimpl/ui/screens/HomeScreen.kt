@@ -79,11 +79,11 @@ fun HomeScreen(
 
     when (orientation) {
         Configuration.ORIENTATION_LANDSCAPE -> {
-            LandscapeContent(vm = vm, navigate = navigate)
+            LandscapeContent(vm, navigate)
         }
 
         else -> {
-            PortraitContent(vm = vm, navigate = navigate)
+            PortraitContent(vm, navigate)
         }
     }
 
@@ -111,20 +111,14 @@ fun PortraitContent(
                 .weight(1f),
             contentAlignment = Alignment.Center
         ) {
-
-            // -- Can't remove this if-statement --
-            if (gameState.eventValue != -1) {
-
-            }
-            // ----------------------
             SettingInformationText(
-                mode = vm.getGameType().toString(),
-                n = vm.getNValue(),
-                eventDelay = vm.getEventInterval(),
-                nrOfEvents = vm.getNrOfEvents()
+                mode = gameState.gameType.toString(),
+                n = gameState.nBack,
+                eventDelay = gameState.eventDelay,
+                nrOfEvents = gameState.nrOfEvents
             )
         }
-        GameTypeToggles(vm = vm)
+        GameTypeToggles(vm)
         StartButton(navigate, 88, 16, 1.0f)
     }
 
@@ -162,16 +156,11 @@ fun LandscapeContent(
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-
-                    // -- Can't remove this if-statement --
-                    if (gameState.eventValue != -1) {
-                    }
-                    // ----------------------
                     SettingInformationText(
-                        mode = vm.getGameType().toString(),
-                        n = vm.getNValue(),
-                        eventDelay = vm.getEventInterval(),
-                        nrOfEvents = vm.getNrOfEvents()
+                        mode = gameState.gameType.toString(),
+                        n = gameState.nBack,
+                        eventDelay = gameState.eventDelay,
+                        nrOfEvents = gameState.nrOfEvents
                     )
                 }
             }
@@ -229,6 +218,8 @@ fun IconAndTitle(
 fun GameTypeToggles(
     vm: GameViewModel
 ) {
+    val gameState by vm.gameState.collectAsState()
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -238,7 +229,7 @@ fun GameTypeToggles(
     ) {
         Button(
             onClick = { vm.selectAudio() },
-            colors = if (vm.getGameType() == GameType.Audio) {
+            colors = if (gameState.gameType == GameType.Audio) {
                 ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             } else {
                 ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
@@ -254,7 +245,7 @@ fun GameTypeToggles(
         }
         Button(
             onClick = { vm.selectVisual() },
-            colors = if (vm.getGameType() == GameType.Visual) {
+            colors = if (gameState.gameType == GameType.Visual) {
                 ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             } else {
                 ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
@@ -292,7 +283,10 @@ fun StartButton(
     ) {
         Text(
             text = "Start Game".uppercase(),
-            style = MaterialTheme.typography.displaySmall,
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontSize = 44.sp,
+                fontWeight = FontWeight.Bold
+            ),
             color = MaterialTheme.colorScheme.onPrimary
         )
     }

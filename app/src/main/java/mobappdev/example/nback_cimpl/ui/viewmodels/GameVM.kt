@@ -138,17 +138,17 @@ class GameVM(
         val currentValue = gameState.value.eventValue
         val previousValues = gameState.value.previousValues
 
-        if (previousValues.size < n || gameState.value.eventScored) {
+        return if (previousValues.size < n + 1 || gameState.value.eventScored) {
             // Not allowed to check
             _gameState.value = _gameState.value.copy(guessType = GuessType.NONE)
-            return false
+            false
+        } else {
+            val correctValue = previousValues[previousValues.size - n - 1]
+            val isMatch = currentValue == correctValue
+
+            handleResult(isMatch)
+            isMatch
         }
-
-        val correctValue = previousValues[previousValues.size - n - 1]
-        val isMatch = currentValue == correctValue
-
-        handleResult(isMatch)
-        return isMatch
     }
 
     private fun handleResult(isMatch: Boolean) {
