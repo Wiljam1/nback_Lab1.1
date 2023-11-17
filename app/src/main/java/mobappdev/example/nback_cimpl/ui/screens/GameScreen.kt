@@ -1,5 +1,6 @@
 package mobappdev.example.nback_cimpl.ui.screens
 
+import android.content.res.Configuration
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import androidx.compose.foundation.background
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -28,20 +30,26 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import mobappdev.example.nback_cimpl.R
 import mobappdev.example.nback_cimpl.ui.viewmodels.GameType
 import mobappdev.example.nback_cimpl.ui.viewmodels.GameViewModel
 import mobappdev.example.nback_cimpl.ui.viewmodels.GuessType
+import kotlin.math.sqrt
 
 @Composable
 fun GameScreen(
@@ -49,15 +57,17 @@ fun GameScreen(
     navigate: () -> Unit,
     textToSpeech: TextToSpeech
 ) {
-    val gameState by vm.gameState.collectAsState()
-    val snackBarHostState = remember { SnackbarHostState() }
+    var orientation by remember { mutableStateOf(Configuration.ORIENTATION_PORTRAIT) }
+    val configuration = LocalConfiguration.current
 
-    // -----------
-    val TAG = "GameScreen"
-    val isRoundInProgress: Boolean = gameState.eventValue != -1
+    LaunchedEffect(configuration) {
+        snapshotFlow { configuration.orientation }
+            .collect { orientation = it }
+    }
+
+    val gameState by vm.gameState.collectAsState()
     val shouldSpeak: Boolean = gameState.shouldSpeak
 
-    // textToSpeech when updated in view-model
     if (shouldSpeak) {
         val text = gameState.textToSpeak
         if (text != null) {
@@ -66,76 +76,152 @@ fun GameScreen(
         vm.setShouldSpeak(false)
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackBarHostState) }
-    ) {
+    when (orientation) {
+        Configuration.ORIENTATION_LANDSCAPE -> {
+            LandscapeContent(vm, navigate)
+        }
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(it),
+        else -> {
+            PortraitContent(vm, navigate)
+        }
+    }
+
+}
+
+@Composable
+private fun PortraitContent(
+    vm: GameViewModel,
+    navigate: () -> Unit
+) {
+    val gameState by vm.gameState.collectAsState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize(),
             verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        HomeButton(vm, navigate)
+        StateInformationText(vm, 24)
+        Divider(color = Color.Black, thickness = 2.dp)
+        Box(
+            modifier = Modifier
+                .weight(1f),
+            contentAlignment = Alignment.Center
         ) {
-            Button(
-                onClick = {
-                    navigate.invoke()
-                    vm.resetGame()
-                },
-                modifier = Modifier
-                    .align(Alignment.Start)
-                    .padding(4.dp)
-            ) {
+            if (gameState.gameType == GameType.Visual) {
+                Grid(vm, 115.dp, true, 0.dp)
+
+            } else {
                 Text(
-                    text = "Back to home",
-                    style = MaterialTheme.typography.displaySmall.copy(
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    modifier = Modifier.padding(bottom = 100.dp),
+                    text = "Listen closely",
+                    style = MaterialTheme.typography.displaySmall.copy(fontSize = 24.sp)
                 )
             }
-            StateInformationText(
-                vm = vm,
-
-                )
-            // Todo: You'll probably want to change this "BOX" part of the composable
-            Box(
-                modifier = Modifier
-                    .weight(1f),
-                contentAlignment = Alignment.Center
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .padding(bottom = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Bottom
             ) {
-                if (gameState.gameType == GameType.Visual) {
-                    Grid(vm)
-
-                } else {
-                    Text(
-                        modifier = Modifier.padding(bottom = 100.dp),
-                        text = "Listen closely",
-                        style = MaterialTheme.typography.displaySmall.copy(fontSize = 24.sp)
-                    )
-                }
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight()
-                        .padding(bottom = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Bottom
-                ) {
-                    MatchButton(vm)
-                }
+                MatchButton(vm, true, false)
             }
         }
     }
 }
 
 @Composable
+private fun LandscapeContent(
+    vm: GameViewModel,
+    navigate: () -> Unit
+) {
+    val gameState by vm.gameState.collectAsState()
+
+    Row(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                if (gameState.gameType == GameType.Visual) {
+                    Grid(vm, 100.dp, false, 100.dp)
+
+                } else {
+                    Text(
+                        modifier = Modifier.padding(start = 100.dp),
+                        text = "Listen closely",
+                        style = MaterialTheme.typography.displaySmall.copy(fontSize = 24.sp)
+                    )
+                }
+            }
+        }
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.weight(1f)
+        ) {
+            HomeButton(vm, navigate)
+            StateInformationText(vm, 24)
+            MatchButton(vm, false, true)
+        }
+    }
+}
+
+
+@Composable
+fun HomeButton(
+    vm: GameViewModel,
+    navigate: () -> Unit
+) {
+    Button(
+        onClick = {
+            navigate.invoke()
+            vm.resetGame()
+        },
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+        modifier = Modifier
+            .padding(8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.arrow_back),
+                contentDescription = "Back arrow icon",
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = "Back to home",
+                style = MaterialTheme.typography.displaySmall.copy(
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+        }
+    }
+}
+
+
+@Composable
 fun MatchButton(
-    vm: GameViewModel
+    vm: GameViewModel,
+    applyBottomPadding: Boolean,
+    applyTopPadding: Boolean
 ) {
     val gameState by vm.gameState.collectAsState()
     val isRoundInProgress: Boolean = gameState.eventValue != -1
-    val paddingValue = if (!isRoundInProgress) 20.dp else 0.dp
+    val paddingBottom = if (applyBottomPadding && !isRoundInProgress) 20.dp else 0.dp
+    val paddingTop = if (applyTopPadding && !isRoundInProgress) 25.dp else 20.dp
     Button(
         onClick = {
             when {
@@ -153,7 +239,7 @@ fun MatchButton(
             ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         },
         modifier = Modifier
-            .padding(bottom = paddingValue)
+            .padding(bottom = paddingBottom, top = paddingTop)
     ) {
         if (!isRoundInProgress) {
             Text(
@@ -184,49 +270,10 @@ fun MatchButton(
 }
 
 @Composable
-fun PlayArea(
-    vm: GameViewModel
-) {
-    Text(
-        modifier = Modifier.padding(8.dp),
-        text = "Tap below when match".uppercase(),
-        style = MaterialTheme.typography.displaySmall.copy(fontSize = 24.sp)
-    )
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        horizontalArrangement = Arrangement.SpaceAround,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        MatchButton(vm)
-    }
-}
-
-@Composable
-fun StartButton(
-    vm: GameViewModel
-) {
-    val gameState by vm.gameState.collectAsState()
-    val isRoundInProgress: Boolean = gameState.eventValue != -1
-    Button(
-        onClick = vm::startGame,
-        enabled = !isRoundInProgress
-    ) {
-        Text(
-            text = "Start round".uppercase(),
-            style = MaterialTheme.typography.displaySmall.copy(
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-        )
-    }
-}
-
-@Composable
 fun StateInformationText(
     vm: GameViewModel,
-    ) {
+    fontSize: Int,
+) {
     val gameState by vm.gameState.collectAsState()
     val score by vm.score.collectAsState()
 
@@ -234,25 +281,23 @@ fun StateInformationText(
         modifier = Modifier.padding(16.dp),
         text = "Score: $score".uppercase(),
         style = MaterialTheme.typography.headlineMedium.copy(
-            fontSize = 24.sp,
+            fontSize = fontSize.sp,
             fontWeight = FontWeight.Bold
         )
     )
     Text(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier,
         text = "Current event number: ${gameState.previousValues.size}",
-        textAlign = TextAlign.Center,
         style = MaterialTheme.typography.headlineMedium.copy(
-            fontSize = 24.sp,
+            fontSize = fontSize.sp,
             fontWeight = FontWeight.Bold
         )
     )
     Text(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier,
         text = "Correct responses: ${gameState.nrOfCorrect}",
-        textAlign = TextAlign.Center,
         style = MaterialTheme.typography.headlineMedium.copy(
-            fontSize = 24.sp,
+            fontSize = fontSize.sp,
             fontWeight = FontWeight.Bold
         )
     )
@@ -261,16 +306,20 @@ fun StateInformationText(
 
 @Composable
 fun Grid(
-    vm: GameViewModel
+    vm: GameViewModel,
+    squareSize: Dp,
+    applyBottomPadding: Boolean,
+    startPadding: Dp
 ) {
     val gameState by vm.gameState.collectAsState()
     val TAG = "Grid"
     val gridSize = 3
-    val squareSize = 115.dp
+
+    val paddingBottom: Dp = if (applyBottomPadding) 100.dp else 0.dp
 
     Column(
         modifier = Modifier
-            .padding(bottom = 100.dp)
+            .padding(bottom = paddingBottom, start = startPadding)
     ) {
         repeat(gridSize) { rowIndex ->
             Row {
