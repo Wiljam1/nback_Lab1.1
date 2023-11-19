@@ -80,12 +80,10 @@ class GameVM(
     private var events = emptyArray<Int>()  // Array with all events
 
     //-----------------------------------
-    private val TAG = "ViewModel"
 
     override fun setGameType(gameType: GameType) {
         // update the gametype in the gamestate
         _gameState.value = _gameState.value.copy(gameType = gameType)
-        Log.d(TAG, "Gamestate set: " + _gameState.value)
     }
 
     override fun getGameType(): GameType {
@@ -129,7 +127,6 @@ class GameVM(
                 GameType.AudioVisual -> runAudioVisualGame()
                 GameType.Visual -> runVisualGame(events)
             }
-            // TODO: Make high score persistent
         }
     }
 

@@ -109,7 +109,7 @@ private fun PortraitContent(
             )
         }
         GameTypeToggles(vm)
-        StartButton(navigate, 88, 16, 1.0f)
+        StartButton(navigate)
     }
 
 }
@@ -159,7 +159,7 @@ private fun LandscapeContent(
                     .weight(1f)
             ) {
                 GameTypeToggles(vm = vm)
-                StartButton(navigate, 88, 16, 1.0f)
+                StartButton(navigate)
             }
         }
     }
@@ -254,16 +254,13 @@ private fun GameTypeToggles(
 
 @Composable
 private fun StartButton(
-    navigate: () -> Unit,
-    height: Int,
-    padding: Int,
-    fillFraction: Float,
+    navigate: () -> Unit
 ) {
     Box(
         modifier = Modifier
-            .padding(padding.dp)
-            .fillMaxWidth(fillFraction)
-            .height(height.dp)
+            .padding(16.dp)
+            .fillMaxWidth(1.0f)
+            .height(88.dp)
             .background(
                 MaterialTheme.colorScheme.primary,
                 shape = RoundedCornerShape(12.dp)
@@ -343,7 +340,7 @@ private fun SettingInformationText(
 @Composable
 fun HomeScreenPreview() {
     // Since I am injecting a VM into my homescreen that depends on Application context, the preview doesn't work.
-    Surface() {
+    Surface {
         //HomeScreen(FakeVM())
     }
 }
